@@ -1,7 +1,20 @@
+use clap::{App, Arg};
 use regex::Regex;
 
 fn main() {
-    let re = Regex::new("oo").unwrap();
+    let args = App::new("grep-lite")
+        .version("0.1")
+        .about("searches for patterns")
+        .arg(
+            Arg::with_name("pattern")
+                .help("The pattern to search for")
+                .takes_value(true)
+                .required(true),
+        )
+        .get_matches();
+
+    let pattern = args.value_of("pattern").unwrap();
+    let re = Regex::new(pattern).unwrap();
 
     let ctx_lines = 2;
     let quote = "\
