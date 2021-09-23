@@ -1,7 +1,10 @@
+use regex::Regex;
+
 fn main() {
+    let re = Regex::new("oo").unwrap();
+
     let ctx_lines = 2;
-    let needle = "oo";
-    let haystack = "\
+    let quote = "\
 Every face, every shop,
 bedroom window, public-house, and
 dark square is a picture
@@ -13,11 +16,11 @@ through millions of pages?";
     let mut tags: Vec<usize> = vec![];
     let mut ctx: Vec<Vec<String>> = vec![];
 
-    for (i, line) in haystack.lines().enumerate() {
+    for (i, line) in quote.lines().enumerate() {
         // <3>
-        if line.contains(needle) {
+        let contains_substring = re.find(line);
+        if contains_substring.is_some() {
             tags.push(i);
-
             ctx.push(Vec::with_capacity(2 * ctx_lines + 1));
         }
     }
@@ -26,7 +29,7 @@ through millions of pages?";
         return;
     }
 
-    for (i, line) in haystack.lines().enumerate() {
+    for (i, line) in quote.lines().enumerate() {
         // <6>
         for (j, tag) in tags.iter().enumerate() {
             let lower_bound = tag.saturating_sub(ctx_lines);
