@@ -7,13 +7,14 @@ fn get_file(file_name: &str) -> File {
     File::open(file_name).unwrap()
 }
 
-fn process_stdin<T: BufRead + Sized>(reader: T, re: Regex) {
-    let mut i = 0;
+fn process_lines_without_context<T: BufRead + Sized>(reader: T, re: Regex) {
+    let mut line_num = 0;
+
     for line_ in reader.lines() {
-        i += 1;
+        line_num += 1;
         let line = line_.unwrap();
         if re.find(&line).is_some() {
-            println!("{}:\t {}", i, line)
+            println!("{}:\t {}", line_num, line)
         }
     }
 }
@@ -39,7 +40,7 @@ fn tag_matches<T: BufRead + Sized>(
     (tags, ctx)
 }
 
-fn process_lines<T: BufRead + Sized>(
+fn process_file_lines<T: BufRead + Sized>(
     reader: T,
     ctx_lines: usize,
     tags: Vec<usize>,
@@ -77,30 +78,29 @@ fn main() {
     let args = App::new("grep-lite")
         .version("0.1")
         .about("searches for patterns")
-        .arg(
-            Arg::with_name("pattern")
-                .help("The pattern to search for")
-                .takes_value(true)
-                .required(true),
-        )
-        .arg(
-            Arg::with_name("file")
-                .help("File to search")
-                .takes_value(true)
-                .required(false),
-        )
-        .arg(
-            Arg::with_name("context")
-                .help("Number of lines of surrounding context to display with matches, max of 5. If not specified, defaults to 0.")
-                .takes_value(true)
-                .required(false),
-        )
+        .arg(Arg::with_name("PATTERN")
+            .help("The pattern to search for")
+            .takes_value(true)
+            .required(true)
+            .index(1))
+        .arg(Arg::with_name("FILE")
+            .short("f")
+            .long("file")
+            .help("File to search")
+            .takes_value(true)
+            .required(false))
+        .arg(Arg::with_name("CONTEXT")
+            .short("c")
+            .long("context")
+            .help("Number of lines of surrounding context to display with matches, max of 5. If not specified, defaults to 0.")
+            .takes_value(true)
+            .required(false))
         .get_matches();
 
-    let pattern = args.value_of("pattern").unwrap();
+    let pattern = args.value_of("PATTERN").unwrap();
     let re = Regex::new(pattern).unwrap();
 
-    let context_arg = args.value_of("context");
+    let context_arg = args.value_of("CONTEXT");
 
     let ctx_lines: usize = match context_arg {
         Some(c) => match c.parse::<usize>() {
@@ -120,12 +120,12 @@ fn main() {
         None => 0,
     };
 
-    let input = args.value_of("file").unwrap_or("-");
+    let input = args.value_of("FILE").unwrap_or("-");
 
     if input == "-" {
         let stdin = io::stdin();
         let reader = stdin.lock();
-        process_stdin(reader, re);
+        process_lines_without_context(reader, re);
     } else {
         let f = File::open(input).unwrap();
         let reader = BufReader::new(f);
@@ -138,6 +138,6 @@ fn main() {
         let file = get_file(input);
         let reader = BufReader::new(file);
 
-        process_lines(reader, ctx_lines, tags, ctx)
+        process_file_lines(reader, ctx_lines, tags, ctx)
     };
 }
