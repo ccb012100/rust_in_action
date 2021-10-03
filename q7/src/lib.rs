@@ -60,12 +60,14 @@ mod tests {
 
     #[test]
     fn q7_to_f32() {
+        let error_margin = f32::EPSILON;
+
         let q1 = Q7::from(0.7);
         let n1 = f32::from(q1);
-        assert_eq!(n1, 0.6953125);
+        assert!((n1 - 0.6953125).abs() < error_margin);
 
         let q2 = Q7::from(n1);
         let n2 = f32::from(q2);
-        assert_eq!(n1, n2);
+        assert!((n1 - n2).abs() < error_margin);
     }
 }
